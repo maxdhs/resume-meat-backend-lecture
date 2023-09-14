@@ -1,10 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import express from "express";
+import cors from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-
-// i want to respond to a get request at /
+app.use(cors());
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send({
@@ -13,7 +18,33 @@ app.get("/", (req, res) => {
   });
 });
 
-// GET /summaries that returns all my summaries
+app.post("/users/register", async (req, res) => {
+  const { username, password } = req.body;
+  const checkUser = await prisma.user.findUnique({
+    where: {
+      username,
+    },
+  });
+  if (checkUser) {
+    return res.send({
+      success: false,
+      message: "Username already exists, please login.",
+    });
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await prisma.user.create({
+    data: {
+      username,
+      password: hashedPassword,
+    },
+  });
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+  res.send({
+    success: true,
+    token,
+  });
+});
+
 app.get("/summaries", async (req, res) => {
   const summaries = await prisma.summary.findMany();
   res.send({
@@ -22,12 +53,8 @@ app.get("/summaries", async (req, res) => {
   });
 });
 
-// if it doesn't find a route
 app.use((req, res) => {
   res.send({ success: false, errro: "No route found." });
 });
 
 app.listen(3000, () => console.log("Server is up!"));
-
-// do we even need a db?
-// hold projects, users
