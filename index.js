@@ -18,30 +18,102 @@ app.get("/", (req, res) => {
   });
 });
 
-app.post("/users/register", async (req, res) => {
-  const { username, password } = req.body;
-  const checkUser = await prisma.user.findUnique({
-    where: {
-      username,
-    },
-  });
-  if (checkUser) {
+app.post("/users/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.send({
+        success: false,
+        error: "You must provide a username and password when logging in.",
+      });
+    }
+    const user = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+    if (!user) {
+      return res.send({
+        success: false,
+        error: "User and/or password is invalid.",
+      });
+    }
+
+    // password matches?
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.send({
+        success: false,
+        error: "User and/or password is invalid.",
+      });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+    res.send({
+      success: true,
+      token,
+    });
+  } catch (error) {
     return res.send({
       success: false,
-      message: "Username already exists, please login.",
+      error: error.message,
     });
   }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: {
-      username,
-      password: hashedPassword,
+});
+
+app.post("/users/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const checkUser = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+    if (checkUser) {
+      return res.send({
+        success: false,
+        error: "Username already exists, please login.",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword,
+      },
+    });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+    res.send({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    return res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// how can i respond to a request at GET /users/token
+// saying will send user info if token is valid
+
+app.get("/users/token", async (req, res) => {
+  // how can i see the token in my console here
+  // that the user sent
+  const token = req.headers.authorization.split(" ")[1];
+  // how do i verify and decode this token?
+  const { userId } = jwt.verify(token, process.env.JWT_SECRET);
+  // where is user info stored and how do i ask for it?
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
     },
   });
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+  delete user.password;
   res.send({
     success: true,
-    token,
+    user,
   });
 });
 
@@ -54,7 +126,7 @@ app.get("/summaries", async (req, res) => {
 });
 
 app.use((req, res) => {
-  res.send({ success: false, errro: "No route found." });
+  res.send({ success: false, error: "No route found." });
 });
 
 app.listen(3000, () => console.log("Server is up!"));
