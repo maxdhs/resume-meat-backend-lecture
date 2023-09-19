@@ -10,10 +10,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProjectName {
+  milkman
+  spammer
+  wikipedia
+  hungryPets
+}
+
 model Summary {
-  id          String @id @default(uuid())
-  text        String @unique
-  projectName String
+  id          String      @id @default(uuid())
+  text        String      @unique
+  projectName ProjectName
 }
 
 model User {

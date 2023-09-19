@@ -99,22 +99,29 @@ app.post("/users/register", async (req, res) => {
 // saying will send user info if token is valid
 
 app.get("/users/token", async (req, res) => {
-  // how can i see the token in my console here
-  // that the user sent
-  const token = req.headers.authorization.split(" ")[1];
-  // how do i verify and decode this token?
-  const { userId } = jwt.verify(token, process.env.JWT_SECRET);
-  // where is user info stored and how do i ask for it?
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-  delete user.password;
-  res.send({
-    success: true,
-    user,
-  });
+  try {
+    // how can i see the token in my console here
+    // that the user sent
+    const token = req.headers.authorization.split(" ")[1];
+    // how do i verify and decode this token?
+    const { userId } = jwt.verify(token, process.env.JWT_SECRET);
+    // where is user info stored and how do i ask for it?
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    delete user.password;
+    res.send({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
 });
 
 app.get("/summaries", async (req, res) => {
