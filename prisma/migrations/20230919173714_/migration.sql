@@ -3,6 +3,7 @@ CREATE TABLE "Summary" (
     "id" STRING NOT NULL,
     "text" STRING NOT NULL,
     "projectName" STRING NOT NULL,
+    "userId" STRING NOT NULL,
 
     CONSTRAINT "Summary_pkey" PRIMARY KEY ("id")
 );
@@ -21,3 +22,6 @@ CREATE UNIQUE INDEX "Summary_text_key" ON "Summary"("text");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- AddForeignKey
+ALTER TABLE "Summary" ADD CONSTRAINT "Summary_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
