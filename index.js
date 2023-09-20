@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { userRouter } from "./routes/userRouter.js";
 import { summaryRouter } from "./routes/summaryRouter.js";
+import { likeRouter } from "./routes/likeRouter.js";
 dotenv.config();
 
 const app = express();
@@ -20,6 +21,10 @@ app.use(express.json());
 app.use(async (req, res, next) => {
   // check if theres an auth token in header and console it
   try {
+    if (!req.headers.authorization) {
+      return next();
+    }
+
     const token = req.headers.authorization.split(" ")[1];
 
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
@@ -40,6 +45,7 @@ app.use(async (req, res, next) => {
 });
 app.use("/users", userRouter);
 app.use("/summaries", summaryRouter);
+app.use("/likes", likeRouter);
 
 app.get("/", (req, res) => {
   res.send({
