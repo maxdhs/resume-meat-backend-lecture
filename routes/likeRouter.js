@@ -24,3 +24,23 @@ likeRouter.post("/", async (req, res) => {
     return res.send({ success: false, error: error.message });
   }
 });
+
+likeRouter.delete("/", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.send({
+        success: false,
+        error: "Please login to like.",
+      });
+    }
+    const { likeId } = req.body;
+    const like = await prisma.like.delete({
+      where: {
+        id: likeId,
+      },
+    });
+    res.send({ success: true, like });
+  } catch (error) {
+    return res.send({ success: false, error: error.message });
+  }
+});

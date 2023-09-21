@@ -38,6 +38,7 @@ summaryRouter.get("/", async (req, res) => {
   const summaries = await prisma.summary.findMany({
     include: {
       user: { select: { username: true, id: true } },
+      likes: true,
     },
   });
   res.send({
